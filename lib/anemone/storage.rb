@@ -30,5 +30,10 @@ module Anemone
       self::Redis.new(opts)
     end
 
+    def self.RedisQueue(opts = {})
+      require 'anemone/storage/redis'
+      self::RedisQueue.new(opts)
+    end
+
   end
 end
