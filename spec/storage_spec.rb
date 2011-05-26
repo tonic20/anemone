@@ -39,6 +39,13 @@ module Anemone
       store.close
     end
 
+    it "should have a class method to produce a RedisQueue" do
+      Anemone::Storage.should respond_to(:RedisQueue)
+      store = Anemone::Storage.RedisQueue
+      store.should be_an_instance_of(Anemone::Storage::RedisQueue)
+      store.close
+    end
+
     module Storage
       shared_examples_for "storage engine" do
 
@@ -106,7 +113,49 @@ module Anemone
           merged.should === @store
         end
       end
+      
+      shared_examples_for "queue storage engine" do
+        
+        before(:each) do
+          @url = SPEC_DOMAIN
+        end
+        
+        it "should implement push and shift" do
+          @store.should respond_to(:push)
+          @store.should respond_to(:shift)
 
+          @store.push @url
+          @store.shift.should == @url
+        end
+
+        it "should implement empty?" do
+          @store.should respond_to(:empty?)
+
+          @store.push @page
+          @store.empty?.should == false
+          
+          @store.shift
+          @store.empty?.should == true
+        end
+
+        it "should implement length and clear" do
+          @store.should respond_to(:length)
+          @store.should respond_to(:clear)
+
+          @store.push @page
+          @store.push @page
+          @store.length.should == 2
+          
+          @store.shift
+          @store.length.should == 1
+          
+          @store.clear
+          @store.length.should == 0
+        end
+        
+        
+      end
+          
       describe PStore do
         it_should_behave_like "storage engine"
 
@@ -167,6 +216,18 @@ module Anemone
         end
       end
 
+      describe Storage::RedisQueue do
+        it_should_behave_like "queue storage engine"
+
+        before(:each) do
+          @store = Storage.RedisQueue
+        end
+
+        after(:each) do
+          @store.close
+        end
+      end
+      
     end
   end
 end
