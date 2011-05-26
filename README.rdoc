@@ -21,6 +21,17 @@ See http://anemone.rubyforge.org for more information.
 == Examples
 See the scripts under the <tt>lib/anemone/cli</tt> directory for examples of several useful Anemone tasks.
 
+	require 'rubygems'
+	require 'anemone'
+
+	Anemone.crawl("http://www.somedomain.com/") do |anemone|
+	  anemone.storage = Anemone::Storage.MongoDB
+	  anemone.persist_queue = true #redis
+	  anemone.verbose = true
+	  anemone.depth_limit = 2
+	  anemone.discard_page_bodies = true
+	end
+
 == Requirements
 * nokogiri
 * robots
