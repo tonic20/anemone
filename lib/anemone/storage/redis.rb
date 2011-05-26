@@ -2,6 +2,35 @@ require 'redis'
 
 module Anemone
   module Storage
+    
+    class RedisQueue
+      
+      def initialize(opts = {:key_prefix => 'links'})
+        @redis = ::Redis.new
+        @key_prefix = "anemone:queue:#{opts[:key_prefix]}"
+      end
+      
+      def push(element)
+        @redis.lpush @key_prefix, Marshal.dump(element)
+      end
+      
+      def shift
+        Marshal.load @redis.rpop(@key_prefix)
+      end
+      
+      def empty?
+        length.zero? ? true : false
+      end
+      
+      def length
+        @redis.llen @key_prefix
+      end
+      
+      def clear
+        @redis.del @key_prefix
+      end
+    end
+    
     class Redis
 
       MARSHAL_FIELDS = %w(links visited fetched)
