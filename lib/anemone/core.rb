@@ -4,6 +4,7 @@ require 'anemone/tentacle'
 require 'anemone/page'
 require 'anemone/exceptions'
 require 'anemone/page_store'
+require 'anemone/persistent_queue'
 require 'anemone/storage'
 require 'anemone/storage/base'
 
