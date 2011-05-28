@@ -26,6 +26,7 @@ See the scripts under the <tt>lib/anemone/cli</tt> directory for examples of sev
 
 	Anemone.crawl("http://www.somedomain.com/") do |anemone|
 	  anemone.storage = Anemone::Storage.MongoDB
+	  anemone.flush = false #default
 	  anemone.persist_queue = true #redis
 	  anemone.verbose = true
 	  anemone.depth_limit = 2
