@@ -272,7 +272,6 @@ module Anemone
     # Returns +false+ otherwise.
     #
     def visit_link?(link, from_page = nil)
-      !@pages.has_page?(link) &&
       !skip_link?(link) &&
       !skip_query_string?(link) &&
       allowed(link) &&
