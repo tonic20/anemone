@@ -18,11 +18,12 @@ module Anemone
       self::TokyoCabinet.new(file)
     end
 
-    def self.MongoDB(mongo_db = nil, collection_name = 'pages')
+    def self.MongoDB(mongo_db = nil, collection_name = 'pages', options = {:flush => false})
       require 'anemone/storage/mongodb'
       mongo_db ||= Mongo::Connection.new.db('anemone')
       raise "First argument must be an instance of Mongo::DB" unless mongo_db.is_a?(Mongo::DB)
-      self::MongoDB.new(mongo_db, collection_name)
+      options.merge! :flush => false unless options.has_key? :flush
+      self::MongoDB.new(mongo_db, collection_name, options)
     end
 
     def self.Redis(opts = {})
