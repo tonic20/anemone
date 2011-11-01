@@ -33,7 +33,7 @@ module Anemone
     #
     # Create a new page
     #
-    def initialize(url, params = {})
+    def initialize(url, params = {}, options = nil)
       @url = url
       @data = OpenStruct.new
 
@@ -49,6 +49,8 @@ module Anemone
       @error = params[:error]
 
       @fetched = !params[:code].nil?
+
+      @options = options
     end
 
     #
@@ -61,7 +63,8 @@ module Anemone
 
       doc.search("//a[@href]").each do |a|
         u = a['href']
-        next if u.nil? or u.empty?
+        rel = a['rel']
+        next if u.nil? || u.empty? || (@options[:skip_nofollow_links] && !rel.nil? && !rel.empty? && rel.downcase == "nofollow")
         abs = to_absolute(URI(u)) rescue next
         @links << abs if in_domain?(abs)
       end
@@ -131,6 +134,14 @@ module Anemone
       404 == @code
     end
 
+    def meta_allow_index?
+      !meta_robots_content.include?("noindex")
+    end
+
+    def meta_allow_follow?
+      !meta_robots_content.include?("nofollow")
+    end
+
     #
     # Converts relative URL *link* into an absolute URL based on the
     # location of the page
@@ -197,6 +208,12 @@ module Anemone
         page.instance_variable_set(var, value)
       end
       page
+    end
+
+    private
+
+    def meta_robots_content
+      @meta_robots_content ||= doc.search("//meta[@name=\"robots\"]").first.attr("content").split(",").map{|i| i.strip.downcase} rescue []
     end
   end
 end

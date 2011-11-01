@@ -55,7 +55,9 @@ module Anemone
       # proxy server port number
       :proxy_port => false,
       # HTTP read timeout in seconds
-      :read_timeout => nil
+      :read_timeout => nil,
+      # skip any link with a rel=nofollow attribute
+      :skip_nofollow_links => false
     }
 
     # Create setter methods for all options to be called from the crawl block
@@ -256,7 +258,8 @@ module Anemone
       !skip_link?(link) &&
       !skip_query_string?(link) &&
       allowed(link) &&
-      !too_deep?(from_page)
+      !too_deep?(from_page) &&
+      (from_page ? from_page.meta_allow_follow? : true)
     end
 
     #
@@ -297,6 +300,5 @@ module Anemone
     def skip_link?(link)
       @skip_link_patterns.any? { |pattern| link.path =~ pattern }
     end
-
   end
 end
