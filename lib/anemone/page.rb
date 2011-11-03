@@ -155,9 +155,10 @@ module Anemone
       relative = URI(link)
       absolute = @url.merge(relative)
 
-      absolute.path = '/' if absolute.path.empty?
+      absolute.path = "/" if absolute.path.empty?
+      absolute.path.gsub! /\/$/, "" if absolute.path.length > 1
 
-      return absolute
+      absolute
     end
 
     #
