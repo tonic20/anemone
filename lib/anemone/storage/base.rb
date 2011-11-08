@@ -70,6 +70,11 @@ module Anemone
           raise GenericError, $!
       end
 
+      def has_digest?(digest, url)
+        @adap.has_digest?(digest, url)
+        rescue
+          raise GenericError, $!
+      end
     end
   end
 end

@@ -58,6 +58,11 @@ module Anemone
       has_key? url
     end
 
+    # Does this PageStore contain the page with the same specified digest?
+    def has_digest?(digest, url)
+      @storage.has_digest? digest, url
+    end
+
     #
     # Use a breadth-first search to calculate the single-source
     # shortest paths from *root* to all pages in the PageStore

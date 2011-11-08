@@ -1,6 +1,7 @@
 require 'nokogiri'
 require 'ostruct'
 require 'webrick/cookie'
+require 'digest/md5'
 
 module Anemone
   class Page
@@ -15,6 +16,10 @@ module Anemone
     attr_reader :redirect_to
     # Exception object, if one was raised during HTTP#fetch_page
     attr_reader :error
+    # MD5 of body content. Used to search for duplicate pages.
+    attr_accessor :digest
+    
+    attr_accessor :has_duplicate
 
     # OpenStruct for user-stored data
     attr_accessor :data
@@ -49,6 +54,8 @@ module Anemone
       @error = params[:error]
 
       @fetched = !params[:code].nil?
+
+      @digest = Digest::MD5.hexdigest(@body) if @fetched && @body
 
       @options = options
     end
@@ -94,6 +101,10 @@ module Anemone
     #
     def fetched?
       @fetched
+    end
+
+    def has_duplicate?
+      @has_duplicate
     end
 
     #
@@ -170,11 +181,11 @@ module Anemone
     end
 
     def marshal_dump
-      [@url, @headers, @data, @body, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched]
+      [@url, @headers, @data, @body, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched, @digest]
     end
 
     def marshal_load(ary)
-      @url, @headers, @data, @body, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched = ary
+      @url, @headers, @data, @body, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched, @digest = ary
     end
 
     def to_hash
@@ -189,7 +200,8 @@ module Anemone
        'referer' => @referer.to_s,
        'redirect_to' => @redirect_to.to_s,
        'response_time' => @response_time,
-       'fetched' => @fetched}
+       'fetched' => @fetched,
+       'digest' => @digest}
     end
 
     def self.from_hash(hash)
@@ -204,7 +216,8 @@ module Anemone
        '@referer' => hash['referer'],
        '@redirect_to' => URI(hash['redirect_to']),
        '@response_time' => hash['response_time'].to_i,
-       '@fetched' => hash['fetched']
+       '@fetched' => hash['fetched'],
+       '@digest' => hash['digest']
       }.each do |var, value|
         page.instance_variable_set(var, value)
       end

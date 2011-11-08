@@ -16,6 +16,7 @@ module Anemone
         @collection = @db[collection_name]
         @collection.remove
         @collection.create_index 'url'
+        @collection.create_index 'digest'
       end
 
       def [](url)
@@ -68,6 +69,10 @@ module Anemone
 
       def has_key?(url)
         !!@collection.find_one('url' => url.to_s)
+      end
+
+      def has_digest?(digest, url)
+        !!@collection.find_one('digest' => digest, 'url' => /^#{url}/i)
       end
 
       def close
