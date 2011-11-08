@@ -33,6 +33,7 @@ module Anemone
 
     def delay
       sleep @opts[:delay] if @opts[:delay] > 0
+      GC.start
     end
 
   end

@@ -167,7 +167,7 @@ module Anemone
         @pages.touch_key page.url
         puts "#{page.url} Queue: #{link_queue.size}" if @opts[:verbose]
         
-        site_url = page.url
+        site_url = page.url.dup
         site_url.path = "/"
         page.has_duplicate = @pages.has_digest?(page.digest, site_url.to_s)
 
