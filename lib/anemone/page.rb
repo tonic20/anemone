@@ -72,7 +72,7 @@ module Anemone
         u = a['href']
         rel = a['rel']
         next if u.nil? || u.empty? || (@options[:skip_nofollow_links] && !rel.nil? && !rel.empty? && rel.downcase == "nofollow")
-        abs = to_absolute(URI(URI.escape(u))) rescue next
+        abs = to_absolute(URI(u)) rescue next
         @links << abs if in_domain?(abs)
       end
       @links.uniq!
