@@ -70,8 +70,14 @@ module Anemone
           raise GenericError, $!
       end
 
-      def has_digest?(digest, url)
-        @adap.has_digest?(digest, url)
+      def has_digest?(url, page_digest)
+        @adap.has_digest?(url, page_digest)
+        rescue
+          raise GenericError, $!
+      end
+
+      def has_duplicate_content?(url, content_digest)
+        @adap.has_duplicate_content?(url, content_digest)
         rescue
           raise GenericError, $!
       end

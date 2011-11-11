@@ -4,7 +4,7 @@ module Anemone
   class PageStore
     extend Forwardable
 
-    def_delegators :@storage, :keys, :values, :size, :each
+    def_delegators :@storage, :keys, :values, :size, :each, :has_digest?, :has_duplicate_content?
 
     def initialize(storage = {})
       @storage = storage
@@ -56,11 +56,6 @@ module Anemone
       end
 
       has_key? url
-    end
-
-    # Does this PageStore contain the page with the same specified digest?
-    def has_digest?(digest, url)
-      @storage.has_digest? digest, url
     end
 
     #

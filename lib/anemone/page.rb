@@ -40,7 +40,7 @@ module Anemone
     #
     def initialize(url, params = {}, options = nil)
       @url = url
-      @data = OpenStruct.new
+      @data = {}
 
       @code = params[:code]
       @headers = params[:headers] || {}
@@ -180,6 +180,15 @@ module Anemone
       uri.host == @url.host
     end
 
+    def root_url
+      unless @root_url
+        u = @url.dup
+        u.path = "/"
+        @root_url = u
+      end
+      @root_url
+    end
+
     def marshal_dump
       [@url, @headers, @data, @body, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched, @digest]
     end
@@ -191,7 +200,7 @@ module Anemone
     def to_hash
       {'url' => @url.to_s,
        'headers' => Marshal.dump(@headers),
-       'data' => Marshal.dump(@data),
+       'data' => @data,
        'body' => @body,
        'links' => links.map(&:to_s), 
        'code' => @code,
@@ -207,7 +216,7 @@ module Anemone
     def self.from_hash(hash)
       page = self.new(URI(hash['url']))
       {'@headers' => Marshal.load(hash['headers']),
-       '@data' => Marshal.load(hash['data']),
+       '@data' => hash['data'],
        '@body' => hash['body'],
        '@links' => hash['links'].map { |link| URI(link) },
        '@code' => hash['code'].to_i,
