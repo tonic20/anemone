@@ -23,7 +23,7 @@ See the scripts under the <tt>lib/anemone/cli</tt> directory for examples of sev
 
 == Requirements
 * nokogiri
-* robots
+* robots (work only with http://github.com/tonic20/robots fork)
 
 == Development
 To test and develop this gem, additional requirements are:
