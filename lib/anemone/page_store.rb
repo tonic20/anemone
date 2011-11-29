@@ -4,7 +4,7 @@ module Anemone
   class PageStore
     extend Forwardable
 
-    def_delegators :@storage, :keys, :values, :size, :each
+    def_delegators :@storage, :keys, :values, :size, :each, :has_digest?, :has_duplicate_content?
 
     def initialize(storage = {})
       @storage = storage

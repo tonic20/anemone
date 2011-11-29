@@ -9,7 +9,7 @@ module Anemone
   module Storage
     class MongoDB 
 
-      BINARY_FIELDS = %w(body headers data)
+      BINARY_FIELDS = %w(body headers)
 
       def initialize(mongo_db, collection_name, options)
         @db = mongo_db
@@ -18,6 +18,8 @@ module Anemone
         if options[:flush]
           @collection.remove
           @collection.create_index 'url'
+          @collection.create_index 'digest'
+          @collection.create_index 'data.content'
         end
       end
 
@@ -73,6 +75,14 @@ module Anemone
         !!@collection.find_one('url' => url.to_s)
       end
 
+      def has_digest?(url, page_digest)
+        !!@collection.find_one('url' => /^#{url}/i, 'digest' => page_digest)
+      end
+
+      def has_duplicate_content?(url, content_digest)
+        !!@collection.find_one('url' => /^#{url}/i, 'data.content' => content_digest)
+      end
+
       def close
         @db.connection.close
       end
@@ -85,8 +95,6 @@ module Anemone
         end
         Page.from_hash(hash)
       end
-
     end
   end
 end
-

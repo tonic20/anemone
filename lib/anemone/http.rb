@@ -20,26 +20,27 @@ module Anemone
     # Fetch a single Page from the response of an HTTP request to *url*.
     # Just gets the final destination page.
     #
-    def fetch_page(url, referer = nil, depth = nil)
-      fetch_pages(url, referer, depth).last
+    def fetch_page(url, referer = nil, depth = nil, options = nil)
+      fetch_pages(url, referer, depth, options).last
     end
 
     #
     # Create new Pages from the response of an HTTP request to *url*,
     # including redirects
     #
-    def fetch_pages(url, referer = nil, depth = nil)
+    def fetch_pages(url, referer = nil, depth = nil, options = nil)
       begin
         url = URI(url) unless url.is_a?(URI)
         pages = []
         get(url, referer) do |response, code, location, redirect_to, response_time|
-          pages << Page.new(location, :body => response.body.dup,
-                                      :code => code,
-                                      :headers => response.to_hash,
-                                      :referer => referer,
-                                      :depth => depth,
-                                      :redirect_to => redirect_to,
-                                      :response_time => response_time)
+          pages << Page.new(location, {:body => response.body, #.dup,
+            :code => code,
+            :headers => response.to_hash,
+            :referer => referer,
+            :depth => depth,
+            :redirect_to => redirect_to,
+            :response_time => response_time},
+            options)
         end
 
         return pages

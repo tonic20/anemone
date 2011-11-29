@@ -1,6 +1,7 @@
 require 'nokogiri'
 require 'ostruct'
 require 'webrick/cookie'
+require 'digest/md5'
 
 module Anemone
   class Page
@@ -15,6 +16,10 @@ module Anemone
     attr_reader :redirect_to
     # Exception object, if one was raised during HTTP#fetch_page
     attr_reader :error
+    # MD5 of body content. Used to search for duplicate pages.
+    attr_accessor :digest
+    
+    attr_accessor :has_duplicate
 
     # OpenStruct for user-stored data
     attr_accessor :data
@@ -33,9 +38,9 @@ module Anemone
     #
     # Create a new page
     #
-    def initialize(url, params = {})
+    def initialize(url, params = {}, options = nil)
       @url = url
-      @data = OpenStruct.new
+      @data = {}
 
       @code = params[:code]
       @headers = params[:headers] || {}
@@ -49,6 +54,10 @@ module Anemone
       @error = params[:error]
 
       @fetched = !params[:code].nil?
+
+      @digest = Digest::MD5.hexdigest(@body) if @fetched && @body
+
+      @options = options
     end
 
     #
@@ -61,7 +70,8 @@ module Anemone
 
       doc.search("//a[@href]").each do |a|
         u = a['href']
-        next if u.nil? or u.empty?
+        rel = a['rel']
+        next if u.nil? || u.empty? || (@options[:skip_nofollow_links] && !rel.nil? && !rel.empty? && rel.downcase == "nofollow")
         abs = to_absolute(URI(u)) rescue next
         @links << abs if in_domain?(abs)
       end
@@ -91,6 +101,10 @@ module Anemone
     #
     def fetched?
       @fetched
+    end
+
+    def has_duplicate?
+      @has_duplicate
     end
 
     #
@@ -131,6 +145,14 @@ module Anemone
       404 == @code
     end
 
+    def meta_allow_index?
+      !meta_robots_content.include?("noindex")
+    end
+
+    def meta_allow_follow?
+      !meta_robots_content.include?("nofollow")
+    end
+
     #
     # Converts relative URL *link* into an absolute URL based on the
     # location of the page
@@ -144,9 +166,10 @@ module Anemone
       relative = URI(link)
       absolute = @url.merge(relative)
 
-      absolute.path = '/' if absolute.path.empty?
+      absolute.path = "/" if absolute.path.empty?
+      absolute.path.gsub! /\/$/, "" if absolute.path.length > 1
 
-      return absolute
+      absolute
     end
 
     #
@@ -157,18 +180,27 @@ module Anemone
       uri.host == @url.host
     end
 
+    def root_url
+      unless @root_url
+        u = @url.dup
+        u.path = "/"
+        @root_url = u
+      end
+      @root_url
+    end
+
     def marshal_dump
-      [@url, @headers, @data, @body, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched]
+      [@url, @headers, @data, @body, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched, @digest]
     end
 
     def marshal_load(ary)
-      @url, @headers, @data, @body, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched = ary
+      @url, @headers, @data, @body, @links, @code, @visited, @depth, @referer, @redirect_to, @response_time, @fetched, @digest = ary
     end
 
     def to_hash
       {'url' => @url.to_s,
        'headers' => Marshal.dump(@headers),
-       'data' => Marshal.dump(@data),
+       'data' => @data,
        'body' => @body,
        'links' => links.map(&:to_s), 
        'code' => @code,
@@ -177,13 +209,14 @@ module Anemone
        'referer' => @referer.to_s,
        'redirect_to' => @redirect_to.to_s,
        'response_time' => @response_time,
-       'fetched' => @fetched}
+       'fetched' => @fetched,
+       'digest' => @digest}
     end
 
     def self.from_hash(hash)
       page = self.new(URI(hash['url']))
       {'@headers' => Marshal.load(hash['headers']),
-       '@data' => Marshal.load(hash['data']),
+       '@data' => hash['data'],
        '@body' => hash['body'],
        '@links' => hash['links'].map { |link| URI(link) },
        '@code' => hash['code'].to_i,
@@ -192,11 +225,18 @@ module Anemone
        '@referer' => hash['referer'],
        '@redirect_to' => URI(hash['redirect_to']),
        '@response_time' => hash['response_time'].to_i,
-       '@fetched' => hash['fetched']
+       '@fetched' => hash['fetched'],
+       '@digest' => hash['digest']
       }.each do |var, value|
         page.instance_variable_set(var, value)
       end
       page
+    end
+
+    private
+
+    def meta_robots_content
+      @meta_robots_content ||= doc.search("//meta[@name=\"robots\"]").first.attr("content").split(",").map{|i| i.strip.downcase} rescue []
     end
   end
 end
