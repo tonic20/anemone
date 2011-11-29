@@ -32,8 +32,10 @@ module Anemone
     private
 
     def delay
-      sleep @opts[:delay] if @opts[:delay] > 0
-      GC.start
+      if @opts[:delay] > 0
+        GC.start
+        sleep @opts[:delay]
+      end
     end
 
   end
