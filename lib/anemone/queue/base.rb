@@ -18,13 +18,14 @@ module Anemone
       def <<(job)
         @adap << job rescue raise InsertionError, $!
       end
+      alias_method :enq, :<<
 
       def deq
         @adap.deq rescue raise RetrievalError, $!
       end
 
       def empty?
-        @adap.empty rescue raise GenericError, $!
+        @adap.empty? rescue raise GenericError, $!
       end
 
       def size

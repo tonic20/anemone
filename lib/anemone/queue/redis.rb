@@ -8,7 +8,6 @@ end
 module Anemone
   module Queue
     class Redis
-
       def initialize(opts = {})
         @opts = opts
         @list = "#{@opts[:key_prefix] || 'anemone'}:#{self.hash.abs}"
@@ -17,14 +16,15 @@ module Anemone
       end
 
       def <<(job)
-        redis.lpush(@list,job.to_json)
+        redis.lpush(@list, job.to_yaml)
       end
+      alias :enq :<<
 
       def deq
         redis.incr(@waiting)
         job = redis.brpop(@list, @opts[:timeout] || 0)
         redis.decr(@waiting)
-        JSON.parse(job.last) rescue nil
+        YAML.load(job.last) rescue nil
       end
 
       def empty?
@@ -48,7 +48,6 @@ module Anemone
       def redis
         Thread.current[:redis] ||= ::Redis.new(@opts)
       end
-
     end
   end
 end

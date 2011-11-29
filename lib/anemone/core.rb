@@ -58,7 +58,10 @@ module Anemone
       # proxy server port number
       :proxy_port => false,
       # HTTP read timeout in seconds
-      :read_timeout => nil
+      :read_timeout => nil,
+
+      :link_queue => nil,
+      :page_queue => nil,
     }
 
     # Create setter methods for all options to be called from the crawl block
@@ -154,40 +157,35 @@ module Anemone
       @urls.delete_if { |url| !visit_link?(url) }
       return if @urls.empty?
 
-      # create link queue
-      link_queue = @opts[:link_queue] || Anemone::Queue.Basic
-
-      # create page queue
-      page_queue = @opts[:page_queue] || Anemone::Queue.Basic
-
       @opts[:threads].times do
-        @tentacles << Thread.new { Tentacle.new(link_queue, page_queue, @opts).run }
+        @tentacles << Thread.new { Tentacle.new(@link_queue, @page_queue, @opts).run }
       end
 
-      @urls.each{ |url| link_queue.enq(url) }
+      @urls.each{ |url| @link_queue.enq(url) }
 
       loop do
-        page = page_queue.deq
+        page = @page_queue.deq
+
         @pages.touch_key page.url
-        puts "#{page.url} Queue: #{link_queue.size}" if @opts[:verbose]
+        puts "#{page.url} Queue: #{@link_queue.size}/#{@page_queue.size}" if @opts[:verbose]
         do_page_blocks page
         page.discard_doc! if @opts[:discard_page_bodies]
 
         links = links_to_follow page
         links.each do |link|
-          link_queue << [link, page.url.dup, page.depth + 1]
+          @link_queue << [link, page.url.dup, page.depth + 1]
         end
         @pages.touch_keys links
 
         @pages[page.url] = page
 
         # if we are done with the crawl, tell the threads to end
-        if link_queue.empty? and page_queue.empty?
-          until link_queue.num_waiting == @tentacles.size
+        if @link_queue.empty? and @page_queue.empty?
+          until @link_queue.num_waiting == @tentacles.size
             Thread.pass
           end
-          if page_queue.empty?
-            @tentacles.size.times { link_queue << :END }
+          if @page_queue.empty?
+            @tentacles.size.times { @link_queue << :END }
             break
           end
         end
@@ -206,6 +204,8 @@ module Anemone
       storage = Anemone::Storage::Base.new(@opts[:storage] || Anemone::Storage.Hash)
       @pages = PageStore.new(storage)
       @robots = Robots.new(@opts[:user_agent]) if @opts[:obey_robots_txt]
+      @link_queue = Anemone::Queue::Base.new(@opts[:link_queue] || Anemone::Queue.Basic)
+      @page_queue = Anemone::Queue::Base.new(@opts[:page_queue] || Anemone::Queue.Basic)
 
       freeze_options
     end
