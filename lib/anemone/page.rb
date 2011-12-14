@@ -38,7 +38,7 @@ module Anemone
     #
     # Create a new page
     #
-    def initialize(url, params = {}, options = nil)
+    def initialize(url, params = {}, options = {})
       @url = url
       @data = {}
 
@@ -71,7 +71,7 @@ module Anemone
       doc.search("//a[@href]").each do |a|
         u = a['href']
         rel = a['rel']
-        next if u.nil? || u.empty? || (@options[:skip_nofollow_links] && !rel.nil? && !rel.empty? && rel.downcase == "nofollow")
+        next if u.nil? || u.empty? || (@options && @options[:skip_nofollow_links] && !rel.nil? && !rel.empty? && rel.downcase == "nofollow")
         abs = to_absolute(URI(u)) rescue next
         @links << abs if in_domain?(abs)
       end
