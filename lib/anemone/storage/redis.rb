@@ -7,7 +7,7 @@ module Anemone
       
       def initialize(opts = {app_prefix: "anemone:queue", key_prefix: "links"})
         @redis = ::Redis.new
-        @key_prefix = (opts[:app_prefix], opts[:key_prefix]).join(":")
+        @key_prefix = [opts[:app_prefix], opts[:key_prefix]].join(":")
       end
       
       def push(element)
