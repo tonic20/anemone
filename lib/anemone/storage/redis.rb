@@ -5,9 +5,9 @@ module Anemone
     
     class RedisQueue
       
-      def initialize(opts = {:key_prefix => 'links'})
+      def initialize(opts = {app_prefix: "anemone:queue", key_prefix: "links"})
         @redis = ::Redis.new
-        @key_prefix = "anemone:queue:#{opts[:key_prefix]}"
+        @key_prefix = (opts[:app_prefix], opts[:key_prefix]).join(":")
       end
       
       def push(element)

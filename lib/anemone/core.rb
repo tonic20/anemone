@@ -69,6 +69,7 @@ module Anemone
       :flush => false,
       # skip any link with a rel=nofollow attribute
       :skip_nofollow_links => false,
+      :redis_prefix => "anemone:queue"
     }
 
     # Create setter methods for all options to be called from the crawl block
@@ -226,8 +227,8 @@ module Anemone
       @opts[:threads] = 1 if @opts[:delay] > 0
 
       if @opts[:persist_queue]
-        link_queue_storage = Storage.RedisQueue(:key_prefix => 'links')
-        page_queue_storage = Storage.RedisQueue(:key_prefix => 'pages')
+        link_queue_storage = Storage.RedisQueue(app_prefix: @opts[:redis_prefix], key_prefix: "links")
+        page_queue_storage = Storage.RedisQueue(app_prefix: @opts[:redis_prefix], key_prefix: "pages")
       
         @link_queue = Storage::PersistentQueue.new link_queue_storage
         @page_queue = Storage::PersistentQueue.new page_queue_storage
