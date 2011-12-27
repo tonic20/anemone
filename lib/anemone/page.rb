@@ -39,7 +39,8 @@ module Anemone
     # Create a new page
     #
     def initialize(url, params = {}, options = nil)
-      @url = url
+      # hack: to upcase encoded urls
+      @url = URI(URI.encode(URI.decode(url.to_s))) # url
       @data = {}
 
       @code = params[:code]
